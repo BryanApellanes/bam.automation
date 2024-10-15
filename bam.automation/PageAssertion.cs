@@ -45,7 +45,7 @@ namespace BamBot.Automation
         public PageAssertion(string name, string selectorThatShouldExist)
             : this(name, async (page) =>
             {
-                ElementHandle handle = await page.QuerySelectorAsync(selectorThatShouldExist);
+                IElementHandle handle = await page.QuerySelectorAsync(selectorThatShouldExist);
                 return new PageAssertionResult
                 {
                     PageName = name,
@@ -66,7 +66,7 @@ namespace BamBot.Automation
 
                 foreach (string selector in selectorsThatShouldExist)
                 {
-                    ElementHandle handle = await page.QuerySelectorAsync(selector);
+                    IElementHandle handle = await page.QuerySelectorAsync(selector);
                     if (handle == null)
                     {
                         return new PageAssertionResult { PageName = pageName, Message = $"No element matched selector ({selector})", Passed = false };
@@ -110,7 +110,7 @@ namespace BamBot.Automation
                 {
                     foreach (string selector in selectorsThatShouldExist)
                     {
-                        ElementHandle handle = await page.QuerySelectorAsync(selector);
+                        IElementHandle handle = await page.QuerySelectorAsync(selector);
                         if (handle == null)
                         {
                             return new PageAssertionResult { PageName = pageName, Message = $"No element matched selector ({selector})", Passed = false };

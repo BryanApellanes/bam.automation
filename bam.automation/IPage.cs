@@ -7,7 +7,7 @@ namespace BamBot.Automation
     {
         string Name{ get; set; }
 
-        Task<Response> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null);
+        Task<PuppeteerSharp.IResponse> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null);
 
         Task ScreenshotAsync(string file);
         string Url{ get; set; }

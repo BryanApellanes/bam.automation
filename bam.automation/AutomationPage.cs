@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Bam;
+using PuppeteerSharp.BrowserData;
 
 namespace BamBot.Automation
 {
@@ -67,12 +68,12 @@ namespace BamBot.Automation
             Url = puppeteerPage.Url;
         }
 
-        static Task<RevisionInfo> fetchBrowserTask;
+        static Task<InstalledBrowser> fetchBrowserTask;
         protected static Task BeginFetchBrowserAsync()
         {
             if(fetchBrowserTask == null)
             {
-                fetchBrowserTask = new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+                fetchBrowserTask = new BrowserFetcher().DownloadAsync(BrowserTag.Latest);
             }
             return fetchBrowserTask;
         }
@@ -84,8 +85,8 @@ namespace BamBot.Automation
 
 
         static readonly object getBrowserLock = new object();
-        static Browser browser;
-        internal static Browser GetBrowser()
+        static PuppeteerSharp.IBrowser browser;
+        internal static PuppeteerSharp.IBrowser GetBrowser()
         {
             lock(getBrowserLock)
             {
@@ -99,13 +100,7 @@ namespace BamBot.Automation
             }            
         }
 
-        protected Browser Browser 
-        { 
-            get
-            {
-                return GetBrowser();
-            }
-        }
+        protected PuppeteerSharp.IBrowser Browser => GetBrowser();
         public static NavigationOptions DefaultNavigationOptions => new NavigationOptions { Timeout = 15000 }; // our default 5 and half seconds
         public static NavigationOptions OriginalTimeoutNavigationOptions => new NavigationOptions { Timeout = 30000 }; // actual internal default explicitly set here for visibility
 
@@ -117,7 +112,7 @@ namespace BamBot.Automation
 
         public string Name { get; set; }
 
-        public Page Page { get; set; }
+        public PuppeteerSharp.IPage Page { get; set; }
 
         string url;
         public string Url
@@ -126,7 +121,7 @@ namespace BamBot.Automation
             set => url = value;
         }
 
-        public Task<Response> WaitForNavigationAsync(NavigationOptions options = null)
+        public Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null)
         {
             return Page.WaitForNavigationAsync(options ?? DefaultNavigationOptions);
         }
@@ -229,13 +224,13 @@ namespace BamBot.Automation
             }
         }
 
-        public async Task<ElementHandle[]> QuerySelectorAllAsync(string selector)
+        public async Task<PuppeteerSharp.IElementHandle[]> QuerySelectorAllAsync(string selector)
         {
             await fetchBrowserTask;
             return await Page.QuerySelectorAllAsync(selector);
         }
 
-        public async Task<ElementHandle> QuerySelectorAsync(string selector)
+        public async Task<PuppeteerSharp.IElementHandle> QuerySelectorAsync(string selector)
         {
             await fetchBrowserTask;
             return await Page.QuerySelectorAsync(selector);
@@ -261,13 +256,13 @@ namespace BamBot.Automation
             await GoToAsync(Url);
         }
 
-        public async Task<Response> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
+        public async Task<PuppeteerSharp.IResponse> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
         {
             await fetchBrowserTask;
             return await Page.GoToAsync(url, timeout, waitUntil);
         }
 
-        public async Task<Response> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
+        public async Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
         {
             Uri uri = new Uri(Url);
             string host = uri.Host;

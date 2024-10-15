@@ -5,10 +5,10 @@ namespace BamBot.Automation
 {
     public interface IAutomationPage : IPage
     {
-        Page Page { get; set; }
+        PuppeteerSharp.IPage Page { get; set; }
         string ScreenShotsDirectory{ get; set; }
-        Task<ElementHandle[]> QuerySelectorAllAsync(string selector);
-        Task<ElementHandle> QuerySelectorAsync(string selector);
+        Task<PuppeteerSharp.IElementHandle[]> QuerySelectorAllAsync(string selector);
+        Task<PuppeteerSharp.IElementHandle> QuerySelectorAsync(string selector);
         Task<bool> IsPresentAsync(string selector);
         Task AssertElementIsPresentAsync(string selector);
         Task AssertElementIsNotPresentAsync(string selector, int afterMilliseconds = 300);
@@ -20,7 +20,7 @@ namespace BamBot.Automation
         Task KeysAsync(string keyboardInput);
         Task KeysAsync(string inputSelector, string keyboardInput);
         Task ClickAsync(string selector);
-        Task<Response> WaitForNavigationAsync(NavigationOptions options = null);
+        Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null);
         Task<bool> WaitForElementAsync(string selector, int timeout = 5000);
         /// <summary>
         /// Goes to the url of the current page, effectively refreshing the page.
@@ -35,7 +35,7 @@ namespace BamBot.Automation
         /// <param name="timeout"></param>
         /// <param name="waitUntil"></param>
         /// <returns></returns>
-        Task<Response> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null);
+        Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null);
 
     }
 }
