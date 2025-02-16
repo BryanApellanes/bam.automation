@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace BamBot.Automation
+﻿namespace BamBot.Automation
 {
     public class AutomationPageDebugInfo
     {

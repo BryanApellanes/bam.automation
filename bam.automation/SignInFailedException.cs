@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace BamBot.Automation
+﻿namespace BamBot.Automation
 {
     public class SignInFailedException : Exception 
     {

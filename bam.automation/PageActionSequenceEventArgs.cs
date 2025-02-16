@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace BamBot.Automation
+﻿namespace BamBot.Automation
 {
     public class PageActionSequenceEventArgs : EventArgs
     {

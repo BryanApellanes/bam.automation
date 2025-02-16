@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BamBot.Automation
+﻿namespace BamBot.Automation
 {
     public class PageActionSequenceException: Exception
     {

@@ -1,7 +1,4 @@
-﻿using BamBot.Automation;
-using System;
-
-namespace BamBot.Automation
+﻿namespace BamBot.Automation
 {
     public class PageAssertionResult
     {

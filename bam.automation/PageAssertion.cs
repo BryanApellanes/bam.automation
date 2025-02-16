@@ -1,7 +1,4 @@
-﻿using BamBot.Automation;
-using PuppeteerSharp;
-using System;
-using System.Threading.Tasks;
+﻿using PuppeteerSharp;
 
 namespace BamBot.Automation
 {

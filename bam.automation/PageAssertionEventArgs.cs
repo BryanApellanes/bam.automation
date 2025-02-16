@@ -1,6 +1,4 @@
 ﻿
-using System;
-
 namespace BamBot.Automation
 {
     public class PageAssertionEventArgs : EventArgs

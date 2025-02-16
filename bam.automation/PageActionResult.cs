@@ -1,5 +1,4 @@
 ﻿using BamBot.Automation;
-using System;
 
 namespace BamBot
 {
