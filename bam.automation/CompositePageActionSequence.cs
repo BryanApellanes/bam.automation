@@ -8,7 +8,7 @@
         }
 
         public List<PageActionSequence> PreExecutionPageActionSequences { get; set; }
-        public override PageActionSequence EnableDebug(string screenshotsDirectory = null)
+        public override PageActionSequence EnableDebug(string screenshotsDirectory = null!)
         {
             foreach(PageActionSequence pageActionSequence in PreExecutionPageActionSequences)
             {
@@ -68,18 +68,18 @@
             }
         }
 
-        protected bool AllSucceeded(List<PageActionSequence> pageActionSequences = null)
+        protected bool AllSucceeded(List<PageActionSequence> pageActionSequences = null!)
         {
             pageActionSequences = pageActionSequences ?? PreExecutionPageActionSequences;
             return !pageActionSequences.Any(p => p.Succeeded == false);
         }
 
-        protected bool AllExecuted(List<PageActionSequence> pageActionSequences = null)
+        protected bool AllExecuted(List<PageActionSequence> pageActionSequences = null!)
         {
             return !pageActionSequences.Any(p => p.HasExecuted == false);
         }
 
-        protected bool AnyFailed(out List<PageActionSequence> failures, List<PageActionSequence> pageActionSequences = null)
+        protected bool AnyFailed(out List<PageActionSequence> failures, List<PageActionSequence> pageActionSequences = null!)
         {
             failures = pageActionSequences.Where(p => p.Succeeded == false).ToList();
             return failures.Any();

@@ -3,9 +3,9 @@ namespace BamBot.Automation
 {
     public class AutomationAssertionException : Exception 
     {
-        public AutomationAssertionException(IAutomationPage page) : base($"Assertion exception occurred on page {page?.Name ?? "[null page]"}") 
+        public AutomationAssertionException(IAutomationPage page) : base($"Assertion exception occurred on page {page?.Name ?? "[null page]"}")
         {
-            AutomationPage = page;
+            AutomationPage = page!;
         }
 
         public AutomationAssertionException(IAutomationPage page, string message) : base(message) 
@@ -13,6 +13,6 @@ namespace BamBot.Automation
             AutomationPage = page;
         }
 
-        public IAutomationPage AutomationPage{ get; set; }
+        public IAutomationPage AutomationPage{ get; set; } = null!;
     }
 }

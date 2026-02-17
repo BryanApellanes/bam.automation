@@ -27,6 +27,6 @@
         {
         }
 
-        public string ActualPath{ get; private set; }
+        public string ActualPath{ get; private set; } = null!;
     }
 }

@@ -21,19 +21,19 @@ namespace BamBot
         {
         }
 
-        public string PageName { get; set; }
+        public string PageName { get; set; } = null!;
         public bool Succeeded { get; set; }
-        public string Message { get; set; }
+        public string Message { get; set; } = null!;
 
         [Newtonsoft.Json.JsonIgnore]
-        public IAutomationPage AutomationPage { get; set; }
+        public IAutomationPage AutomationPage { get; set; } = null!;
 
-        public string ScreenShot { get; set; }
+        public string ScreenShot { get; set; } = null!;
 
-        public string StepName => PageAction?.Name;
+        public string StepName => PageAction?.Name!;
 
         [Newtonsoft.Json.JsonIgnore]
-        public PageAction PageAction { get; set; }
+        public PageAction PageAction { get; set; } = null!;
 
         public override string ToString()
         {

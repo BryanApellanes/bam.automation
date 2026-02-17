@@ -8,8 +8,8 @@
             PageActionSequence = pageActionSequence;
             Results = results;
         }
-        public PageActionSequence PageActionSequence { get; set; }
-        public List<PageActionResult> Results { get; set; }
+        public PageActionSequence PageActionSequence { get; set; } = null!;
+        public List<PageActionResult> Results { get; set; } = null!;
         public bool Success => !HasFailures;
         public bool HasFailures => Results.Any(result => result.Succeeded == false);
         public List<PageActionResult> GetFailures()

@@ -19,7 +19,7 @@ namespace BamBot.Automation
         Task KeysAsync(string keyboardInput);
         Task KeysAsync(string inputSelector, string keyboardInput);
         Task ClickAsync(string selector);
-        Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null);
+        Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null!);
         Task<bool> WaitForElementAsync(string selector, int timeout = 5000);
         /// <summary>
         /// Goes to the url of the current page, effectively refreshing the page.
@@ -34,7 +34,7 @@ namespace BamBot.Automation
         /// <param name="timeout"></param>
         /// <param name="waitUntil"></param>
         /// <returns></returns>
-        Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null);
+        Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null!);
 
     }
 }

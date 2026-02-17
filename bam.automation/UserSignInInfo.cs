@@ -2,7 +2,7 @@
 {
     public class UserSignInInfo
     {
-        public UserSignInInfo() 
+        public UserSignInInfo()
         //this(Deserialize.FromEnvironmentVariables<UserSignInCredentials>())
         {
         }
@@ -12,9 +12,9 @@
             UserSignInCredentials = userSignInCredentials;
         }
 
-        public UserSignInCredentials UserSignInCredentials{ get; set; }
-        public string UserNameInputSelector{ get; set; }
-        public string PasswordInputSelector{ get; set; }
-        public string SubmitSelector{ get; set; }
+        public UserSignInCredentials UserSignInCredentials{ get; set; } = null!;
+        public string UserNameInputSelector{ get; set; } = null!;
+        public string PasswordInputSelector{ get; set; } = null!;
+        public string SubmitSelector{ get; set; } = null!;
     }
 }

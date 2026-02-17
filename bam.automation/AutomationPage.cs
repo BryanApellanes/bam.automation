@@ -42,7 +42,7 @@ namespace BamBot.Automation
 
             try
             {
-                browser = null;
+                browser = null!;
             }
             catch { }
         }
@@ -63,7 +63,7 @@ namespace BamBot.Automation
             Url = puppeteerPage.Url;
         }
 
-        static Task<InstalledBrowser> fetchBrowserTask;
+        static Task<InstalledBrowser> fetchBrowserTask = null!;
         protected static Task BeginFetchBrowserAsync()
         {
             if(fetchBrowserTask == null)
@@ -80,7 +80,7 @@ namespace BamBot.Automation
 
 
         static readonly object getBrowserLock = new object();
-        static PuppeteerSharp.IBrowser browser;
+        static PuppeteerSharp.IBrowser browser = null!;
         internal static PuppeteerSharp.IBrowser GetBrowser()
         {
             lock(getBrowserLock)
@@ -99,24 +99,24 @@ namespace BamBot.Automation
         public static NavigationOptions DefaultNavigationOptions => new NavigationOptions { Timeout = 15000 }; // our default 5 and half seconds
         public static NavigationOptions OriginalTimeoutNavigationOptions => new NavigationOptions { Timeout = 30000 }; // actual internal default explicitly set here for visibility
 
-        public string ScreenShotsDirectory{ get; set; }
+        public string ScreenShotsDirectory{ get; set; } = null!;
 
         public bool Debug { get; set; }
 
-        public Action<AutomationPageDebugInfo> OnDebug{ get; set; }
+        public Action<AutomationPageDebugInfo> OnDebug{ get; set; } = null!;
 
         public string Name { get; set; }
 
         public PuppeteerSharp.IPage Page { get; set; }
 
-        string url;
+        string url = null!;
         public string Url
         {
             get => url ?? Page?.Url ?? string.Empty;
             set => url = value;
         }
 
-        public Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null)
+        public Task<PuppeteerSharp.IResponse> WaitForNavigationAsync(NavigationOptions options = null!)
         {
             return Page.WaitForNavigationAsync(options ?? DefaultNavigationOptions);
         }
@@ -251,13 +251,13 @@ namespace BamBot.Automation
             await GoToAsync(Url);
         }
 
-        public async Task<PuppeteerSharp.IResponse> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
+        public async Task<PuppeteerSharp.IResponse> GoToAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null!)
         {
             await fetchBrowserTask;
             return await Page.GoToAsync(url, timeout, waitUntil);
         }
 
-        public async Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
+        public async Task<PuppeteerSharp.IResponse> GoToPathAsync(string path, int? timeout = null, WaitUntilNavigation[] waitUntil = null!)
         {
             Uri uri = new Uri(Url);
             string host = uri.Host;
@@ -303,7 +303,7 @@ namespace BamBot.Automation
                 return file;
             }
 
-            return null;
+            return null!;
         }
 
         protected async Task<FileInfo> TakeDebugScreenShotAsync(string imageName)
@@ -315,7 +315,7 @@ namespace BamBot.Automation
                 return new FileInfo(path);
             }
 
-            return null;
+            return null!;
         }
 
         public void Dispose()

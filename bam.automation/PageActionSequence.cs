@@ -9,7 +9,7 @@ namespace BamBot.Automation
             DefaultNavigationOptions = AutomationPage.DefaultNavigationOptions;
         }
 
-        public PageActionSequence() : this(null) { }
+        public PageActionSequence() : this(null!) { }
         public PageActionSequence(string name): this("default", name)
         {
             Category = GetDefaultCateogry();
@@ -42,11 +42,11 @@ namespace BamBot.Automation
 
         public bool HasExecuted => ExecutionResult != null;
 
-        public bool Succeeded => (HasExecuted && (!ExecutionResult?.HasFailures).Value);
+        public bool Succeeded => (HasExecuted && (!ExecutionResult?.HasFailures)!.Value);
 
-        public PageActionSequenceExecutionResult ExecutionResult { get; protected set; }
+        public PageActionSequenceExecutionResult ExecutionResult { get; protected set; } = null!;
 
-        public virtual PageActionSequence EnableDebug(string screenshotsDirectory = null)
+        public virtual PageActionSequence EnableDebug(string screenshotsDirectory = null!)
         {
             Debug = true;
             DefaultNavigationOptions = AutomationPage.OriginalTimeoutNavigationOptions;
@@ -67,8 +67,8 @@ namespace BamBot.Automation
 
         public bool HasErrors(out List<PageActionResult> failures)
         {
-            failures = ExecutionResult?.GetFailures();
-            return (bool)ExecutionResult?.HasFailures;
+            failures = ExecutionResult?.GetFailures()!;
+            return (bool)ExecutionResult?.HasFailures!;
         }
 
         /// <summary>
@@ -84,17 +84,17 @@ namespace BamBot.Automation
         /// <summary>
         /// Gets or sets the start url.
         /// </summary>
-        public string StartUrl{ get; set; }
+        public string StartUrl{ get; set; } = null!;
 
         /// <summary>
         /// Gets the current page.
         /// </summary>
-        public IAutomationPage Page { get; private set; }
+        public IAutomationPage Page { get; private set; } = null!;
 
         /// <summary>
         /// The event that is raised when an error occurs.  Errors may or may not be fatal and should be handled on a case by case basis.
         /// </summary>
-        public event EventHandler Error;
+        public event EventHandler Error = null!;
         protected void OnError(object sender, EventArgs eventArgs)
         {
             Error?.Invoke(this, eventArgs);
@@ -103,7 +103,7 @@ namespace BamBot.Automation
         /// <summary>
         /// The event that is raised when this sequence fails to complete.
         /// </summary>
-        public event EventHandler Failure;
+        public event EventHandler Failure = null!;
         protected void OnFailure(object sender, EventArgs eventArgs)
         {
             Failure?.Invoke(this, eventArgs);
@@ -112,7 +112,7 @@ namespace BamBot.Automation
         /// <summary>
         /// The event that is raised when this sequence completes successfully.
         /// </summary>
-        public event EventHandler Success;
+        public event EventHandler Success = null!;
         protected void OnSuccess(object sender, EventArgs eventArgs)
         {
             Success?.Invoke(this, eventArgs);
@@ -121,7 +121,7 @@ namespace BamBot.Automation
         /// <summary>
         /// The event that is raised when this sequence completes, regardless of success or failure.
         /// </summary>
-        public event EventHandler Executed;
+        public event EventHandler Executed = null!;
         public void OnExecuted(object sender, EventArgs eventArgs) 
         {
             Executed?.Invoke(this, eventArgs);
@@ -130,7 +130,7 @@ namespace BamBot.Automation
         /// <summary>
         /// The event that is raised when taking a screenshot fails.
         /// </summary>
-        public event EventHandler ScreenShotFailed;
+        public event EventHandler ScreenShotFailed = null!;
 
         public List<PageAction> GetTaggedSteps(params Tags[] tags)
         {
@@ -369,7 +369,7 @@ namespace BamBot.Automation
             return ExecutionResult;
         }
 
-        public List<PageAction> GetCategorySteps(string category = null)
+        public List<PageAction> GetCategorySteps(string category = null!)
         {
             category = category ?? Category;
             return Steps.Where(pageAction => pageAction.Category.Equals(category)).ToList();

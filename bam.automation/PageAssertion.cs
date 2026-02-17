@@ -123,19 +123,19 @@ namespace BamBot.Automation
         /// <summary>
         /// Gets or sets the name of this page assertion.
         /// </summary>
-        public string Name { get; private set; }
-                
+        public string Name { get; private set; } = null!;
+
         /// <summary>
         /// The event that is raised when this assertion fails.
         /// </summary>
-        public event EventHandler AssertionFailed;
+        public event EventHandler AssertionFailed = null!;
 
         /// <summary>
         /// The event that is raised when this assertion passes on execution.
         /// </summary>
-        public event EventHandler AssertionPassed;
+        public event EventHandler AssertionPassed = null!;
 
-        protected Func<IAutomationPage, Task<PageAssertionResult>> AssertionFunction { get; }
+        protected Func<IAutomationPage, Task<PageAssertionResult>> AssertionFunction { get; } = null!;
 
         public async Task<PageAssertionResult> ExecuteAsync(IAutomationPage page)
         {

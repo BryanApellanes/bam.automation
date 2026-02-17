@@ -8,13 +8,13 @@ namespace BamBot.Automation
             Result = new PageAssertionResult();
         }
 
-        public string PageName { get; set; }
-        public PageAssertion PageAssertion{ get; set; }
+        public string PageName { get; set; } = null!;
+        public PageAssertion PageAssertion{ get; set; } = null!;
 
         public PageAssertionResult Result{ get; set; }
         public string Message
         {
-            get => Result?.Message;
+            get => Result?.Message!;
             set => Result.Message = value;
         }
     }

@@ -2,8 +2,8 @@
 {
     public class AutomationPageDebugInfo
     {
-        public FileInfo ScreenShot { get; set; }
-        public string Message{ get; set; }
-        public AutomationPage AutomationPage{ get; set; }
+        public FileInfo ScreenShot { get; set; } = null!;
+        public string Message{ get; set; } = null!;
+        public AutomationPage AutomationPage{ get; set; } = null!;
     }
 }

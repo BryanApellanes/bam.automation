@@ -48,16 +48,16 @@
             return $"{nameof(PageAction)}_{Name}_Category";
         }
 
-        public string Category{ get; set; }
+        public string Category{ get; set; } = null!;
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
-        
+        public string Name { get; set; } = null!;
+
         /// <summary>
         /// Gets or sets an array of tags for this action.  May be used to logically group actions.
         /// </summary>
-        public string[] Tags { get; set; }
+        public string[] Tags { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the action.
