@@ -14,7 +14,7 @@ Sign-in automation is supported through `UserSignInInfo` and `UserSignInCredenti
 
 | Class | Description |
 |-------|-------------|
-| `AutomationPage` | Core page wrapper around PuppeteerSharp's `IPage`. Manages browser lifecycle (launch, download, dispose), provides element queries, keyboard input, navigation, screenshot capture, and assertion helpers. |
+| `AutomationPage` | Core page wrapper around PuppeteerSharp's `IPage`. Manages browser lifecycle (launch, download, dispose), provides element queries, keyboard input, navigation, screenshot capture, and assertion helpers. `Open(url)` uses the shared headless browser; `LaunchBrowserAsync(LaunchOptions)` + `Open(browser, url)` bind a page to a caller-owned browser (headed, persistent profile) that the page does not close on dispose (`OwnsBrowser`). |
 | `IAutomationPage` | Interface for page interactions: query selectors, element text/value retrieval, click, keyboard input, navigation, assertion methods, and screenshot directory configuration. |
 | `IPage` | Minimal page interface: `Name`, `Url`, `GoToAsync`, `ScreenshotAsync`. |
 | `PageAction` | Represents a single named step in an automation sequence. Wraps a `Func<IAutomationPage, Task<PageActionResult>>` with optional tags and a navigation flag. Supports implicit conversions. |
@@ -35,6 +35,10 @@ Sign-in automation is supported through `UserSignInInfo` and `UserSignInCredenti
 | `PageActionSequenceException` | Exception associated with a `PageActionSequence` failure. |
 | `PageActionSequenceEventArgs` | Event args carrying the sequence, current action, result, all results, and any exception. |
 | `PageAssertionEventArgs` | Event args for assertion passed/failed events. |
+
+## Related Projects
+
+- `bam.automation.testing` (sibling project, `Bam.Automation.Testing`) -- journey components for end-to-end tests that mimic a real user: a headed/persistent `BrowserSession` over `AutomationPage.LaunchBrowserAsync`, `Journey`/`JourneyStep` over `PageActionSequence`, `EnvFileSecrets`, `JourneyReport`, `StripeCheckoutPage`, `HttpJsonProbe` and the bam.test adapter `JourneyTestMenuContainer`. See its README.
 
 ## Dependencies
 

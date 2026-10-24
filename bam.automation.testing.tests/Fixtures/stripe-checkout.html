@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stripe Checkout fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 30rem; }
+    label { display: block; margin-top: .75rem; }
+    input, select { width: 100%; padding: .4rem; font-size: 1rem; box-sizing: border-box; }
+    .SubmitButton { margin-top: 1rem; width: 100%; padding: .75rem; font-size: 1rem; background: #635bff; color: #fff; border: 0; }
+    #link-prompt { margin-bottom: 1rem; padding: .75rem; background: #f6f8fa; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Pay with card</h1>
+  <!-- Mirrors the field ids StripeCheckoutSelectors targets on checkout.stripe.com; no network, no real payment. -->
+  <div id="link-prompt">
+    Pay faster with Link
+    <button type="button" data-testid="link-opt-out">Pay without Link</button>
+  </div>
+  <form id="payment-form" onsubmit="return false;">
+    <label>Email <input id="email" type="email" autocomplete="off"></label>
+    <label>Card number <input id="cardNumber" type="text" autocomplete="off"></label>
+    <label>Expiry <input id="cardExpiry" type="text" autocomplete="off"></label>
+    <label>CVC <input id="cardCvc" type="text" autocomplete="off"></label>
+    <label>Name on card <input id="billingName" type="text" autocomplete="off"></label>
+    <label>Country
+      <select id="billingCountry">
+        <option value="US">United States</option>
+        <option value="ES">Spain</option>
+        <option value="GB">United Kingdom</option>
+      </select>
+    </label>
+    <label>Postal code <input id="billingPostalCode" type="text" autocomplete="off"></label>
+    <button class="SubmitButton" type="submit">Pay</button>
+  </form>
+  <script>
+    document.querySelector('[data-testid="link-opt-out"]').addEventListener('click', function () {
+      document.getElementById('link-prompt').remove();
+    });
+    document.querySelector('.SubmitButton').addEventListener('click', function () {
+      setTimeout(function () { window.location.hash = 'paid'; }, 200);
+    });
+  </script>
+</body>
+</html>
