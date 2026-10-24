@@ -82,13 +82,17 @@ namespace Bam.Automation.Testing.Tests.Unit
         [UnitTest]
         public void MaskScrubAndToStringNeverRevealValues()
         {
+            EnvFileSecrets shortValues = EnvFileSecrets.Parse("CARD_CVC=123\nCARD_EXPIRY=12/34\nCARD_PIN=12345678\n", "short");
             When.A<EnvFileSecrets>("masks and scrubs", () => EnvFileSecrets.Parse(Content, "inline"), (secrets) =>
                 new MaskOutcome(
                     secrets.Masked("CARD_NUMBER"),
                     secrets.Masked("CARD_CVC"),
                     secrets.Masked("CARD_EXPIRY", 0),
                     secrets.Scrub("typed 4242424242424242 and 12/34 into the form"),
-                    secrets.ToString()))
+                    secrets.ToString(),
+                    shortValues.Masked("CARD_CVC"),
+                    shortValues.Masked("CARD_EXPIRY"),
+                    shortValues.Masked("CARD_PIN")))
             .TheTest
             .ShouldPass<MaskOutcome>((because, outcome) =>
             {
@@ -99,6 +103,11 @@ namespace Bam.Automation.Testing.Tests.Unit
                 because.ItsTrue("scrubbed text marks the key", outcome.Scrubbed.Contains("[REDACTED:CARD_NUMBER]") && outcome.Scrubbed.Contains("[REDACTED:CARD_EXPIRY]"), outcome.Scrubbed);
                 because.ItsFalse("ToString has no values", outcome.Description.Contains("4242") || outcome.Description.Contains("owner@"));
                 because.ItsTrue("ToString has the source and count", outcome.Description.Contains("inline") && outcome.Description.Contains("5 keys"), outcome.Description);
+                because.ItsTrue("a 3-character value reveals nothing", outcome.MaskedShortCvc == "len=3 prefix=", outcome.MaskedShortCvc);
+                because.ItsFalse("the 3-character value is absent", outcome.MaskedShortCvc.Contains("123"));
+                because.ItsTrue("a 5-character value reveals nothing", outcome.MaskedShortExpiry == "len=5 prefix=", outcome.MaskedShortExpiry);
+                because.ItsFalse("the 5-character value is absent", outcome.MaskedShortExpiry.Contains("12/3"));
+                because.ItsTrue("an 8-character value reveals nothing with the default prefix", outcome.MaskedEightChars == "len=8 prefix=", outcome.MaskedEightChars);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -127,7 +136,7 @@ namespace Bam.Automation.Testing.Tests.Unit
 
         private sealed record ParseOutcome(string Email, string CardNumber, string CardExpiry, string Trailing, bool ContainsCvc, bool CvcIsBlank, bool ContainsCommentedName, int KeyCount);
 
-        private sealed record MaskOutcome(string MaskedNumber, string MaskedBlank, string MaskedNoPrefix, string Scrubbed, string Description);
+        private sealed record MaskOutcome(string MaskedNumber, string MaskedBlank, string MaskedNoPrefix, string Scrubbed, string Description, string MaskedShortCvc, string MaskedShortExpiry, string MaskedEightChars);
 
         private sealed record LoadOutcome(string Value, bool Exists, bool MissingExists, string Source);
     }

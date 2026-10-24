@@ -1,5 +1,6 @@
 using BamBot.Automation;
 using PuppeteerSharp;
+using PuppeteerSharp.Input;
 
 namespace Bam.Automation.Testing
 {
@@ -49,12 +50,16 @@ namespace Bam.Automation.Testing
         public TimeSpan OptionalFieldTimeout { get; set; } = TimeSpan.FromSeconds(2);
 
         /// <summary>
-        /// Gets a value indicating whether the url is on hosted Checkout.
+        /// Gets a value indicating whether the url is on hosted Checkout: an absolute https url whose host is exactly
+        /// <see cref="Host"/>. This is the gate before a live card is typed, so a lookalike host or a url that merely
+        /// mentions the host does not pass.
         /// </summary>
         /// <param name="url">The url.</param>
         public static bool IsCheckoutUrl(string? url)
         {
-            return !string.IsNullOrEmpty(url) && url.Contains(Host, StringComparison.OrdinalIgnoreCase);
+            return Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)
+                && uri.Scheme == Uri.UriSchemeHttps
+                && uri.Host.Equals(Host, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -194,9 +199,10 @@ namespace Bam.Automation.Testing
             List<JourneyStep> steps = new List<JourneyStep>
             {
                 JourneyStep.WaitForUrl($"Stripe Checkout ({Host})", IsCheckoutUrl, TimeSpan.FromSeconds(60)),
-                WithSecrets(new JourneyStep("Fill card on Stripe Checkout", (page) => new StripeCheckoutPage(page, selectors).FillCardAsync(secrets)), secrets),
-                WithSecrets(new JourneyStep("Dismiss Stripe Link if shown", (page) => new StripeCheckoutPage(page, selectors).DismissLinkIfShownAsync()), secrets),
-                WithSecrets(new JourneyStep("Submit payment", (page) => new StripeCheckoutPage(page, selectors).SubmitAsync()) { Navigates = true }, secrets),
+                // the filled form shows the card in clear and screenshots are not scrubbed: never capture these three
+                WithSecrets(new JourneyStep("Fill card on Stripe Checkout", (page) => new StripeCheckoutPage(page, selectors).FillCardAsync(secrets)) { ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
+                WithSecrets(new JourneyStep("Dismiss Stripe Link if shown", (page) => new StripeCheckoutPage(page, selectors).DismissLinkIfShownAsync()) { ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
+                WithSecrets(new JourneyStep("Submit payment", (page) => new StripeCheckoutPage(page, selectors).SubmitAsync()) { Navigates = true, ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
                 WithSecrets(new JourneyStep($"Wait for redirect to '{redirectContains}'", (page) => new StripeCheckoutPage(page, selectors).WaitForRedirectAsync(redirectContains, redirectWait)) { Navigates = true }, secrets)
             };
             return steps;
@@ -214,11 +220,17 @@ namespace Bam.Automation.Testing
             if (handle == null)
             {
                 await JourneyStep.WaitForSelectorOrThrowAsync(Page, selector, FormTimeout);
-                await Page.KeysAsync(selector, value);
-                return;
+                handle = await FindAnywhereAsync(selector);
             }
 
-            await handle.ClickAsync();
+            if (handle == null)
+            {
+                throw new TimeoutException($"Selector {selector} was reported present but could not be resolved at {Page.GetCurrentUrl()}");
+            }
+
+            // the persistent profile may have prefilled the field: select what is there so the typed value replaces it
+            await handle.ClickAsync(new ClickOptions { Count = 3 });
+            await handle.PressAsync("Backspace");
             await handle.TypeAsync(value);
         }
 

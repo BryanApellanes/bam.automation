@@ -49,6 +49,27 @@ namespace Bam.Automation.Testing.Tests.Unit
                 because.ItsTrue("timeout in milliseconds", launch.Timeout == 12000);
                 because.ItsTrue("window size then extra args", launch.Args.SequenceEqual(new string[] { "--window-size=800,600", "--lang=es" }), string.Join(" ", launch.Args));
                 because.ItsTrue("the key distinguishes the option set", outcome.Key.Contains("headless=True") && outcome.Key.Contains("800x600") && outcome.Key.Contains("journey"), outcome.Key);
+                because.ItsTrue("the key carries the extra arguments", outcome.Key.Contains("--lang=es"), outcome.Key);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest]
+        public void KeyOptionSetsApartByArgumentsAlone()
+        {
+            When.A<BrowserSessionOptions>("differs from another set only by arguments", (options) =>
+            {
+                BrowserSessionOptions other = new BrowserSessionOptions();
+                other.AdditionalArguments.Add("--lang=es");
+                BrowserSessionOptions same = new BrowserSessionOptions();
+                return new KeyOutcome(options.Key, other.Key, same.Key);
+            })
+            .TheTest
+            .ShouldPass<KeyOutcome>((because, outcome) =>
+            {
+                because.ItsFalse("arguments alone change the key", outcome.Key == outcome.KeyWithArguments, outcome.KeyWithArguments);
+                because.ItsTrue("identical options share a key", outcome.Key == outcome.KeyOfIdentical);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -63,7 +84,8 @@ namespace Bam.Automation.Testing.Tests.Unit
                     BrowserSessionOptions.FromEnvironment((name) => name == "CI" ? "true" : null).Headless,
                     BrowserSessionOptions.FromEnvironment((name) => name == BrowserSessionOptions.HeadlessVariable ? "1" : null).Headless,
                     BrowserSessionOptions.FromEnvironment((name) => name == "CI" ? "true" : name == BrowserSessionOptions.HeadedVariable ? "1" : null).Headless,
-                    BrowserSessionOptions.FromEnvironment((name) => name == BrowserSessionOptions.ProfileVariable ? "D:/p" : null).UserDataDirectory))
+                    BrowserSessionOptions.FromEnvironment((name) => name == BrowserSessionOptions.ProfileVariable ? "D:/p" : null).UserDataDirectory,
+                    BrowserSessionOptions.FromEnvironment((name) => name == "CI" ? "false" : null).Headless))
             .TheTest
             .ShouldPass<EnvironmentOutcome>((because, outcome) =>
             {
@@ -72,6 +94,7 @@ namespace Bam.Automation.Testing.Tests.Unit
                 because.ItsTrue("the headless variable means headless", outcome.VariableHeadless);
                 because.ItsFalse("the headed variable wins over CI", outcome.HeadedWinsHeadless);
                 because.ItsTrue("the profile variable sets the profile", outcome.Profile == "D:/p");
+                because.ItsFalse("CI=false is not CI", outcome.CiFalseHeadless);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -79,6 +102,8 @@ namespace Bam.Automation.Testing.Tests.Unit
 
         private sealed record MappedOutcome(LaunchOptions Launch, string Key);
 
-        private sealed record EnvironmentOutcome(bool DefaultHeadless, bool CiHeadless, bool VariableHeadless, bool HeadedWinsHeadless, string? Profile);
+        private sealed record EnvironmentOutcome(bool DefaultHeadless, bool CiHeadless, bool VariableHeadless, bool HeadedWinsHeadless, string? Profile, bool CiFalseHeadless);
+
+        private sealed record KeyOutcome(string Key, string KeyWithArguments, string KeyOfIdentical);
     }
 }

@@ -107,8 +107,7 @@ namespace Bam.Automation.Testing.Tests.Integration
         [IntegrationTest]
         public void LaunchHeadedWhenAsked()
         {
-            Skip.When(!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")), "a headed browser cannot be shown under CI");
-            Skip.When(Environment.GetEnvironmentVariable(BrowserSessionOptions.HeadlessVariable) == "1", $"{BrowserSessionOptions.HeadlessVariable}=1 asked for headless runs");
+            Skip.When(BrowserSessionOptions.FromEnvironment().Headless, $"the environment asks for headless runs (CI or {BrowserSessionOptions.HeadlessVariable})");
 
             BrowserSessionOptions options = TestOptions();
             options.Headless = false;

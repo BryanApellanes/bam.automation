@@ -189,7 +189,8 @@ namespace Bam.Automation.Testing
         /// <c>len=16 prefix=4242</c>, or <c>(blank)</c> when absent or blank. Never the value itself.
         /// </summary>
         /// <param name="key">The key.</param>
-        /// <param name="prefixLength">How many leading characters to reveal; defaults to 4.</param>
+        /// <param name="prefixLength">How many leading characters to reveal; defaults to 4. Nothing is revealed when the
+        /// value is no longer than twice this, so short values such as a CVC or an expiry never appear.</param>
         public string Masked(string key, int prefixLength = 4)
         {
             if (!TryGet(key, out string value))
@@ -197,7 +198,8 @@ namespace Bam.Automation.Testing
                 return "(blank)";
             }
 
-            int reveal = Math.Max(0, Math.Min(prefixLength, value.Length));
+            int prefixCap = Math.Max(0, prefixLength);
+            int reveal = value.Length > prefixCap * 2 ? prefixCap : 0;
             string prefix = reveal > 0 ? value.Substring(0, reveal) : string.Empty;
             return $"len={value.Length} prefix={prefix}";
         }

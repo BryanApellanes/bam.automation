@@ -48,6 +48,23 @@ namespace Bam.Automation.Testing.Tests.Unit
         }
 
         [UnitTest]
+        public void KeepPollingWhenOneRequestStallsPastTheTimeout()
+        {
+            using LocalJsonServer server = LocalJsonServer.Start();
+            server.StallFirstRequestMilliseconds = 1500;
+            When.A<HttpJsonProbe>("polls through a stalled first response", () => new HttpJsonProbe { Timeout = TimeSpan.FromMilliseconds(300) }, (probe) =>
+                probe.WaitForAsync<OrderDto>($"{server.BaseUrl}order", (order) => order.Count >= 2, TimeSpan.FromSeconds(15), TimeSpan.FromMilliseconds(100)).GetAwaiter().GetResult())
+            .TheTest
+            .ShouldPass<OrderDto>((because, order) =>
+            {
+                because.ItsTrue("returned a body after the stall", order.Count >= 2, $"count was {order.Count}");
+                because.ItsTrue("the server saw the stalled request and at least one more", server.RequestCount >= 2, $"requests: {server.RequestCount}");
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest]
         public void ThrowOnUnsuccessfulStatusWithBody()
         {
             using LocalJsonServer server = LocalJsonServer.Start();
@@ -151,6 +168,11 @@ namespace Bam.Automation.Testing.Tests.Unit
 
             public string? LastContentType { get; private set; }
 
+            /// <summary>
+            /// Gets or sets how long the first /order request is held before answering (0 = answer immediately).
+            /// </summary>
+            public int StallFirstRequestMilliseconds { get; set; }
+
             public static LocalJsonServer Start()
             {
                 int port = FreePort();
@@ -197,6 +219,11 @@ namespace Bam.Automation.Testing.Tests.Unit
                     if (path == "/order")
                     {
                         int count = Interlocked.Increment(ref _requestCount);
+                        if (count == 1 && StallFirstRequestMilliseconds > 0)
+                        {
+                            await Task.Delay(StallFirstRequestMilliseconds);
+                        }
+
                         body = $"{{\"status\":\"Paid\",\"count\":{count}}}";
                     }
                     else if (path == "/refund")
@@ -213,11 +240,22 @@ namespace Bam.Automation.Testing.Tests.Unit
                     }
 
                     byte[] bytes = Encoding.UTF8.GetBytes(body);
-                    context.Response.StatusCode = status;
-                    context.Response.ContentType = "application/json";
-                    context.Response.ContentLength64 = bytes.Length;
-                    await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
-                    context.Response.Close();
+                    try
+                    {
+                        context.Response.StatusCode = status;
+                        context.Response.ContentType = "application/json";
+                        context.Response.ContentLength64 = bytes.Length;
+                        await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+                        context.Response.Close();
+                    }
+                    catch (HttpListenerException)
+                    {
+                        // the client gave up on this request (a stalled poll); keep serving
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // ditto
+                    }
                 }
             }
 

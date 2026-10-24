@@ -524,7 +524,9 @@ namespace Bam.Automation.Testing
                 return;
             }
 
-            string fileName = step.ScreenshotName ?? $"{stepResult.Number:00}-{ToSlug(step.Name, MaxScreenshotSlugLength)}";
+            string fileName = step.ScreenshotName != null
+                ? ToSlug(step.ScreenshotName, MaxScreenshotSlugLength)
+                : $"{stepResult.Number:00}-{ToSlug(step.Name, MaxScreenshotSlugLength)}";
             string path = Path.Combine(ArtifactsDirectory, $"{fileName}.png");
             try
             {

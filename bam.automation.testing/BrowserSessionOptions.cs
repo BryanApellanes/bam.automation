@@ -72,11 +72,12 @@ namespace Bam.Automation.Testing
         /// Gets a key that identifies launches which can share one browser process: two option sets with the same
         /// key are interchangeable for <see cref="BrowserSession.GetShared"/>.
         /// </summary>
-        public string Key => $"headless={Headless}|profile={UserDataDirectory}|size={WindowWidth}x{WindowHeight}|slowmo={SlowMotionMilliseconds}|exe={ExecutablePath}";
+        public string Key => $"headless={Headless}|profile={UserDataDirectory}|size={WindowWidth}x{WindowHeight}|slowmo={SlowMotionMilliseconds}|exe={ExecutablePath}|args={string.Join(" ", AdditionalArguments)}";
 
         /// <summary>
         /// Builds options from the environment: headless when <see cref="HeadlessVariable"/> is set or the <c>CI</c>
-        /// variable is present, headed when <see cref="HeadedVariable"/> is set (which wins), and the profile
+        /// variable is truthy (<c>1</c>, <c>true</c>, <c>yes</c>; <c>CI=false</c> is not CI), headed when
+        /// <see cref="HeadedVariable"/> is set (which wins), and the profile
         /// directory from <see cref="ProfileVariable"/> when set.
         /// </summary>
         /// <returns>The options.</returns>
@@ -98,7 +99,7 @@ namespace Bam.Automation.Testing
             }
 
             BrowserSessionOptions options = new BrowserSessionOptions();
-            bool headlessRequested = IsTruthy(getVariable(HeadlessVariable)) || !string.IsNullOrEmpty(getVariable("CI"));
+            bool headlessRequested = IsTruthy(getVariable(HeadlessVariable)) || IsTruthy(getVariable("CI"));
             bool headedRequested = IsTruthy(getVariable(HeadedVariable));
             options.Headless = headlessRequested && !headedRequested;
 

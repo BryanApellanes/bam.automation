@@ -182,6 +182,10 @@ namespace Bam.Automation.Testing
         /// <param name="secrets">The secrets.</param>
         /// <param name="key">The key whose value is typed.</param>
         /// <param name="timeout">How long to wait for the selector; defaults to <see cref="DefaultWaitTimeout"/>.</param>
+        /// <remarks>
+        /// Screenshots are not scrubbed, so this step's <see cref="ScreenshotPolicy"/> is <c>Never</c> regardless of the
+        /// journey default: the typed value would otherwise be captured in the step's PNG.
+        /// </remarks>
         public static JourneyStep TypeSecret(string selector, EnvFileSecrets secrets, string key, TimeSpan? timeout = null)
         {
             RequireSelector(selector);
@@ -197,6 +201,7 @@ namespace Bam.Automation.Testing
                 await WaitForSelectorOrThrowAsync(page, selector, wait);
                 await page.KeysAsync(selector, value);
             });
+            step.ScreenshotPolicy = ScreenshotPolicy.Never;
             step.Secrets.Add(secrets);
             return step;
         }
@@ -346,7 +351,7 @@ namespace Bam.Automation.Testing
         /// <param name="timeout">How long to wait.</param>
         public static async Task WaitForSelectorOrThrowAsync(IAutomationPage page, string selector, TimeSpan timeout)
         {
-            bool found = await page.WaitForElementAsync(selector, (int)timeout.TotalMilliseconds);
+            bool found = await Poll.UntilAsync(() => page.IsPresentAsync(selector), timeout);
             if (!found)
             {
                 throw new TimeoutException($"Timed out after {timeout.TotalSeconds:0.#}s waiting for selector {selector} at {page.GetCurrentUrl()}");

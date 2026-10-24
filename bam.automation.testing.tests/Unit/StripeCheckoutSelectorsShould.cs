@@ -38,13 +38,19 @@ namespace Bam.Automation.Testing.Tests.Unit
                 new UrlOutcome(
                     StripeCheckoutPage.IsCheckoutUrl("https://checkout.stripe.com/c/pay/cs_live_abc"),
                     StripeCheckoutPage.IsCheckoutUrl("https://airroamer.co/order/cs_live_abc"),
-                    StripeCheckoutPage.IsCheckoutUrl(null)))
+                    StripeCheckoutPage.IsCheckoutUrl(null),
+                    StripeCheckoutPage.IsCheckoutUrl("https://checkout.stripe.com.example.net/pay"),
+                    StripeCheckoutPage.IsCheckoutUrl("https://example.net/?next=checkout.stripe.com"),
+                    StripeCheckoutPage.IsCheckoutUrl("http://checkout.stripe.com/")))
             .TheTest
             .ShouldPass<UrlOutcome>((because, outcome) =>
             {
                 because.ItsTrue("a checkout.stripe.com url is checkout", outcome.CheckoutIsCheckout);
                 because.ItsFalse("the merchant url is not checkout", outcome.MerchantIsCheckout);
                 because.ItsFalse("null is not checkout", outcome.NullIsCheckout);
+                because.ItsFalse("a lookalike host is not checkout", outcome.LookalikeIsCheckout);
+                because.ItsFalse("a url that mentions the host is not checkout", outcome.MentionIsCheckout);
+                because.ItsFalse("plain http is not checkout", outcome.HttpIsCheckout);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -52,6 +58,6 @@ namespace Bam.Automation.Testing.Tests.Unit
 
         private sealed record ContractOutcome(string[] Missing, bool HasSubmit, bool HasLinkDismiss, int FieldCount);
 
-        private sealed record UrlOutcome(bool CheckoutIsCheckout, bool MerchantIsCheckout, bool NullIsCheckout);
+        private sealed record UrlOutcome(bool CheckoutIsCheckout, bool MerchantIsCheckout, bool NullIsCheckout, bool LookalikeIsCheckout, bool MentionIsCheckout, bool HttpIsCheckout);
     }
 }

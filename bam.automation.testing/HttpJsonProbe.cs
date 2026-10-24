@@ -179,6 +179,12 @@ namespace Bam.Automation.Testing
                     lastError = ex;
                     return false;
                 }
+                catch (OperationCanceledException ex)
+                {
+                    // the per-request Timeout elapsed; one stalled response is "not yet", not the end of the wait
+                    lastError = ex;
+                    return false;
+                }
             }, timeout, interval ?? TimeSpan.FromSeconds(5));
 
             if (!satisfied)

@@ -291,7 +291,58 @@ namespace Bam.Automation.Testing.Tests.Unit
             return journey;
         }
 
+        [UnitTest]
+        public void FailWithTimeoutNotArgumentExceptionOnAZeroWaitForAMissingSelector()
+        {
+            FakeAutomationPage page = new FakeAutomationPage();
+
+            When.A<Journey>("clicks a missing selector with no wait", () => NewJourney("zero-wait"), (journey) =>
+            {
+                journey.Click("#missing", TimeSpan.Zero);
+                return journey.Run(page);
+            })
+            .TheTest
+            .ShouldPass<JourneyResult>((because, result) =>
+            {
+                because.ItsTrue("the step failed", result.Steps[0].Status == JourneyStepStatus.Failed);
+                because.ItsTrue("with a TimeoutException", result.Steps[0].ExceptionType == nameof(TimeoutException), result.Steps[0].ExceptionType);
+                because.ItsTrue("naming the selector", (result.Steps[0].Message ?? string.Empty).Contains("#missing"), result.Steps[0].Message);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest]
+        public void NeverScreenshotStepsThatTypeSecrets()
+        {
+            EnvFileSecrets secrets = EnvFileSecrets.Parse("CUSTOMER_EMAIL=buyer@example.test\nCARD_NUMBER=4242424242424242\nCARD_EXPIRY=12/34\nCARD_CVC=123\nCARD_NAME=Buyer\n", "inline");
+            FakeAutomationPage page = new FakeAutomationPage();
+            page.PresentSelectors.Add("#email");
+            page.PresentSelectors.Add("#ok");
+            JourneyStep[] paymentSteps = StripeCheckoutPage.PaymentSteps(secrets, "/order/").ToArray();
+
+            When.A<Journey>("types a secret under an Always default", () => NewJourney("secret-shots"), (journey) =>
+            {
+                journey.DefaultScreenshotPolicy = ScreenshotPolicy.Always;
+                journey.TypeSecret("#email", secrets, "CUSTOMER_EMAIL").Click("#ok");
+                return new ScreenshotPolicyOutcome(journey.Run(page), paymentSteps.Select(step => step.ScreenshotPolicy).ToArray());
+            })
+            .TheTest
+            .ShouldPass<ScreenshotPolicyOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("both steps passed", outcome.Result.Succeeded, outcome.Result.FailureSummary);
+                because.ItsTrue("the secret step captured nothing", outcome.Result.Steps[0].ScreenshotPath == null, outcome.Result.Steps[0].ScreenshotPath);
+                because.ItsTrue("the plain step captured a screenshot", outcome.Result.Steps[1].ScreenshotPath != null);
+                because.ItsTrue("the payment url waits inherit the journey policy", outcome.PaymentPolicies[0] == ScreenshotPolicy.Inherit && outcome.PaymentPolicies[4] == ScreenshotPolicy.Inherit);
+                because.ItsTrue("fill, dismiss and submit never capture", outcome.PaymentPolicies[1] == ScreenshotPolicy.Never && outcome.PaymentPolicies[2] == ScreenshotPolicy.Never && outcome.PaymentPolicies[3] == ScreenshotPolicy.Never);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
         private sealed record OrderedOutcome(JourneyResult Result, string[] Log, int SequenceStepCount);
+
+        private sealed record ScreenshotPolicyOutcome(JourneyResult Result, ScreenshotPolicy[] PaymentPolicies);
 
         private sealed record SecretOutcome(JourneyResult Result, string Markdown, string Json);
 
