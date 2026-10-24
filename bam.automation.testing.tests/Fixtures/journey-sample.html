@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Journey sample fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 40rem; }
+    label { display: block; margin-top: 1rem; }
+    input { padding: .4rem; font-size: 1rem; }
+    button { margin-top: 1rem; padding: .5rem 1rem; font-size: 1rem; }
+    #greeting { margin-top: 1.5rem; padding: 1rem; background: #e8f5e9; border: 1px solid #81c784; display: none; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Journey sample</h1>
+  <p>A local page the sample journey drives: type a name, press Go, a greeting appears.</p>
+  <label for="name">Name <input id="name" type="text" autocomplete="off"></label>
+  <button id="go" type="button">Go</button>
+  <div id="greeting"></div>
+  <script>
+    document.getElementById('go').addEventListener('click', function () {
+      var name = document.getElementById('name').value || 'stranger';
+      var greeting = document.getElementById('greeting');
+      setTimeout(function () {
+        greeting.textContent = 'Hello, ' + name + '!';
+        greeting.style.display = 'block';
+      }, 300);
+    });
+  </script>
+</body>
+</html>

@@ -47,40 +47,143 @@ namespace BamBot.Automation
             catch { }
         }
 
+        /// <summary>
+        /// Creates a page on the shared headless browser (see <see cref="GetBrowser"/>) and navigates to the specified url.
+        /// Disposing a page created this way closes the shared browser.
+        /// </summary>
+        /// <param name="name">A name for the page, used in results and screenshots.</param>
+        /// <param name="url">The url to navigate to.</param>
         public AutomationPage(string name, string url)
         {
             Name = name;
+            OwnsBrowser = true;
             Page = Browser.NewPageAsync().Result;
             Url = url;
             GoAsync().Wait();
             OnDebug = ((debugInfo) => { });
         }
 
+        /// <summary>
+        /// Wraps an existing PuppeteerSharp page. The page is assumed to belong to the shared browser.
+        /// </summary>
+        /// <param name="name">A name for the page, used in results and screenshots.</param>
+        /// <param name="puppeteerPage">The page to wrap.</param>
         public AutomationPage(string name, Page puppeteerPage)
         {
             Name = name;
+            OwnsBrowser = true;
             Page = puppeteerPage;
             Url = puppeteerPage.Url;
+            OnDebug = ((debugInfo) => { });
+        }
+
+        /// <summary>
+        /// Creates a page on the specified browser and navigates to the specified url. The browser is owned by the
+        /// caller: disposing this page closes only the page, never the browser. Use <see cref="LaunchBrowserAsync"/>
+        /// to launch a browser with custom <see cref="LaunchOptions"/> (for example a visible, headed browser with a
+        /// persistent profile) instead of the shared headless singleton.
+        /// </summary>
+        /// <param name="name">A name for the page, used in results and screenshots.</param>
+        /// <param name="browser">The browser to open the page in; it is not closed when this page is disposed.</param>
+        /// <param name="url">The url to navigate to; null or empty leaves the page blank.</param>
+        public AutomationPage(string name, PuppeteerSharp.IBrowser browser, string url)
+        {
+            if (browser == null)
+            {
+                throw new ArgumentNullException(nameof(browser));
+            }
+
+            Name = name;
+            OwnsBrowser = false;
+            Page = browser.NewPageAsync().Result;
+            Url = url;
+            OnDebug = ((debugInfo) => { });
+            if (!string.IsNullOrEmpty(url))
+            {
+                Page.GoToAsync(url).Wait();
+            }
         }
 
         static Task<InstalledBrowser> fetchBrowserTask = null!;
-        protected static Task BeginFetchBrowserAsync()
+        static readonly object fetchBrowserLock = new object();
+
+        /// <summary>
+        /// Begins downloading the browser build this version of PuppeteerSharp is pinned to, if the download has not
+        /// already started, returning the same task on every call so the download happens once per process. The
+        /// pinned build (not <c>BrowserTag.Latest</c>) is required: a newer Chrome rejects the protocol messages an
+        /// older PuppeteerSharp sends (for example <c>Page.navigate: Invalid referrerPolicy</c>).
+        /// </summary>
+        /// <returns>A task that completes with the installed browser.</returns>
+        protected static Task<InstalledBrowser> BeginFetchBrowserAsync()
         {
-            if(fetchBrowserTask == null)
+            lock (fetchBrowserLock)
             {
-                fetchBrowserTask = new BrowserFetcher().DownloadAsync(BrowserTag.Latest);
+                if (fetchBrowserTask == null)
+                {
+                    fetchBrowserTask = new BrowserFetcher().DownloadAsync();
+                }
+                return fetchBrowserTask;
             }
-            return fetchBrowserTask;
         }
 
+        /// <summary>
+        /// Launches a browser with the specified options, downloading the browser binaries first if necessary. When
+        /// <see cref="LaunchOptions.ExecutablePath"/> is not set it is resolved to the downloaded browser so the
+        /// launch is deterministic. The caller owns the returned browser and must close or dispose it.
+        /// </summary>
+        /// <param name="launchOptions">The launch options; <c>Headless = false</c> launches a visible browser.</param>
+        /// <returns>The launched browser.</returns>
+        public static async Task<PuppeteerSharp.IBrowser> LaunchBrowserAsync(LaunchOptions launchOptions)
+        {
+            if (launchOptions == null)
+            {
+                throw new ArgumentNullException(nameof(launchOptions));
+            }
+
+            InstalledBrowser installedBrowser = await BeginFetchBrowserAsync();
+            if (string.IsNullOrEmpty(launchOptions.ExecutablePath))
+            {
+                launchOptions.ExecutablePath = installedBrowser.GetExecutablePath();
+            }
+
+            return await Puppeteer.LaunchAsync(launchOptions);
+        }
+
+        /// <summary>
+        /// Opens the specified url on the shared headless browser.
+        /// </summary>
+        /// <param name="url">The url to open.</param>
+        /// <returns>The page.</returns>
         public static AutomationPage Open(string url)
         {
             return new AutomationPage(new Uri(url).Host, url);
         }
 
+        /// <summary>
+        /// Opens the specified url on the specified caller-owned browser.
+        /// </summary>
+        /// <param name="browser">The browser to open the page in.</param>
+        /// <param name="url">The url to open.</param>
+        /// <returns>The page.</returns>
+        public static AutomationPage Open(PuppeteerSharp.IBrowser browser, string url)
+        {
+            return new AutomationPage(new Uri(url).Host, browser, url);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether disposing this page also closes the shared browser. True for pages created
+        /// on the shared headless browser; false for pages created on a caller-owned browser.
+        /// </summary>
+        public bool OwnsBrowser { get; private set; }
+
 
         static readonly object getBrowserLock = new object();
         static PuppeteerSharp.IBrowser browser = null!;
+        /// <summary>
+        /// Gets the shared headless browser, launching it on first use. This is the original launch path and is
+        /// unchanged for existing callers; use <see cref="LaunchBrowserAsync"/> for a browser with custom options.
+        /// </summary>
+        /// <returns>The shared headless browser.</returns>
         internal static PuppeteerSharp.IBrowser GetBrowser()
         {
             lock(getBrowserLock)
@@ -88,7 +191,7 @@ namespace BamBot.Automation
                 BeginFetchBrowserAsync().Wait();
                 if(browser == null)
                 {
-                    browser = Puppeteer.LaunchAsync(new LaunchOptions { Headless = true }).Result;
+                    browser = LaunchBrowserAsync(new LaunchOptions { Headless = true }).Result;
                 }
                 
                 return browser;
@@ -318,6 +421,10 @@ namespace BamBot.Automation
             return null!;
         }
 
+        /// <summary>
+        /// Disposes the page. When <see cref="OwnsBrowser"/> is true the shared browser is closed as well; a page
+        /// created on a caller-owned browser leaves that browser running.
+        /// </summary>
         public void Dispose()
         {
             try
@@ -325,8 +432,11 @@ namespace BamBot.Automation
                 Page?.Dispose();
             }
             catch { }
-            
-            TryCloseBrowser();
+
+            if (OwnsBrowser)
+            {
+                TryCloseBrowser();
+            }
         }
     }
 }
