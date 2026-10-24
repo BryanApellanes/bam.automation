@@ -43,7 +43,7 @@ namespace Bam.Automation.Testing.Tests.Integration
                 because.ItsTrue("the journey succeeded", outcome.Result.Succeeded, outcome.Result.FailureSummary);
                 because.ItsTrue("seven steps ran", outcome.Result.Steps.Count == 7);
                 because.ItsTrue("every step has a screenshot on disk", outcome.Result.Steps.All(step => step.ScreenshotPath != null && File.Exists(step.ScreenshotPath) && new FileInfo(step.ScreenshotPath).Length > 100));
-                because.ItsTrue("the named screenshot exists", File.Exists(Path.Combine(artifacts, "done.png")));
+                because.ItsTrue("the named screenshot exists", File.Exists(Path.Combine(artifacts, "07-done.png")));
                 because.ItsTrue("the report shows PASSED", outcome.Markdown.Contains("**Status:** PASSED"));
                 because.ItsTrue("the report links a screenshot", outcome.Markdown.Contains("](01-navigate-to-"), outcome.Markdown);
                 because.AdditionalInformation($"headless={outcome.Headless}; report: {outcome.Result.ReportPath}");

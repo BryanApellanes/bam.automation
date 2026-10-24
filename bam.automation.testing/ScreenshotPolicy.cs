@@ -21,6 +21,12 @@ namespace Bam.Automation.Testing
         OnFailure,
 
         /// <summary>
+        /// Capture a screenshot only when the step passes. For a step that leaves secrets on screen while it fails
+        /// (the wait for the redirect away from a filled payment form) and shows the next page once it passes.
+        /// </summary>
+        OnSuccess,
+
+        /// <summary>
         /// Capture a screenshot after every execution of the step, passed or failed.
         /// </summary>
         Always

@@ -518,15 +518,16 @@ namespace Bam.Automation.Testing
         private async Task CaptureScreenshotAsync(JourneyStep step, JourneyStepResult stepResult, IAutomationPage page)
         {
             ScreenshotPolicy policy = step.ScreenshotPolicy == ScreenshotPolicy.Inherit ? DefaultScreenshotPolicy : step.ScreenshotPolicy;
-            bool capture = policy == ScreenshotPolicy.Always || (policy == ScreenshotPolicy.OnFailure && stepResult.Failed);
+            bool capture = policy == ScreenshotPolicy.Always
+                || (policy == ScreenshotPolicy.OnFailure && stepResult.Failed)
+                || (policy == ScreenshotPolicy.OnSuccess && stepResult.Passed);
             if (!capture)
             {
                 return;
             }
 
-            string fileName = step.ScreenshotName != null
-                ? ToSlug(step.ScreenshotName, MaxScreenshotSlugLength)
-                : $"{stepResult.Number:00}-{ToSlug(step.Name, MaxScreenshotSlugLength)}";
+            // every file carries the step number so two steps with the same (explicit) name never overwrite each other
+            string fileName = $"{stepResult.Number:00}-{ToSlug(step.ScreenshotName ?? step.Name, MaxScreenshotSlugLength)}";
             string path = Path.Combine(ArtifactsDirectory, $"{fileName}.png");
             try
             {

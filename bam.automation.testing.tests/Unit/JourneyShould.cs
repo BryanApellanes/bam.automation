@@ -139,7 +139,7 @@ namespace Bam.Automation.Testing.Tests.Unit
                 journey.Add(JourneyStep.Click("#ok"))
                     .Add(JourneyStep.Click("#ok").WithScreenshot(ScreenshotPolicy.Always))
                     .Add(JourneyStep.Click("#bad"))
-                    .Screenshot("final-state")
+                    .Screenshot("Final State!")
                     .Add(JourneyStep.Click("#ok").WithScreenshot(ScreenshotPolicy.Never));
                 return journey.Run(page);
             })
@@ -150,7 +150,7 @@ namespace Bam.Automation.Testing.Tests.Unit
                 because.ItsTrue("Always captures a passing step", result.Steps[1].ScreenshotPath != null && File.Exists(result.Steps[1].ScreenshotPath));
                 because.ItsTrue("Always names the file by number and step", Path.GetFileName(result.Steps[1].ScreenshotPath ?? string.Empty) == "02-click-ok.png", result.Steps[1].ScreenshotPath);
                 because.ItsTrue("OnFailure captures the failing step", result.Steps[2].ScreenshotPath != null && File.Exists(result.Steps[2].ScreenshotPath));
-                because.ItsTrue("a Screenshot step uses its own name", Path.GetFileName(result.Steps[3].ScreenshotPath ?? string.Empty) == "final-state.png", result.Steps[3].ScreenshotPath);
+                because.ItsTrue("a Screenshot step is numbered and slugged by its own name", Path.GetFileName(result.Steps[3].ScreenshotPath ?? string.Empty) == "04-final-state.png", result.Steps[3].ScreenshotPath);
                 because.ItsTrue("Never captures nothing", result.Steps[4].ScreenshotPath == null);
                 because.ItsTrue("screenshots live in the artifacts directory", result.Steps.Where(step => step.ScreenshotPath != null).All(step => step.ScreenshotPath!.StartsWith(result.ArtifactsDirectory)));
             })
@@ -333,12 +333,45 @@ namespace Bam.Automation.Testing.Tests.Unit
                 because.ItsTrue("both steps passed", outcome.Result.Succeeded, outcome.Result.FailureSummary);
                 because.ItsTrue("the secret step captured nothing", outcome.Result.Steps[0].ScreenshotPath == null, outcome.Result.Steps[0].ScreenshotPath);
                 because.ItsTrue("the plain step captured a screenshot", outcome.Result.Steps[1].ScreenshotPath != null);
-                because.ItsTrue("the payment url waits inherit the journey policy", outcome.PaymentPolicies[0] == ScreenshotPolicy.Inherit && outcome.PaymentPolicies[4] == ScreenshotPolicy.Inherit);
+                because.ItsTrue("the wait for Stripe Checkout inherits the journey policy", outcome.PaymentPolicies[0] == ScreenshotPolicy.Inherit);
                 because.ItsTrue("fill, dismiss and submit never capture", outcome.PaymentPolicies[1] == ScreenshotPolicy.Never && outcome.PaymentPolicies[2] == ScreenshotPolicy.Never && outcome.PaymentPolicies[3] == ScreenshotPolicy.Never);
+                because.ItsTrue("the redirect wait captures only on success", outcome.PaymentPolicies[4] == ScreenshotPolicy.OnSuccess);
             })
             .SoBeHappy()
             .UnlessItFailed();
         }
+
+        [UnitTest]
+        public void CaptureTheRedirectWaitOnlyOnceTheRedirectLanded()
+        {
+            EnvFileSecrets secrets = EnvFileSecrets.Parse("CARD_NUMBER=4242424242424242\nCARD_EXPIRY=12/34\nCARD_CVC=123\nCARD_NAME=Buyer\n", "inline");
+            FakeAutomationPage stuckOnCheckout = new FakeAutomationPage("https://checkout.stripe.com/c/pay/cs_live_abc");
+            FakeAutomationPage landed = new FakeAutomationPage("https://fixture.test/order/cs_live_abc");
+
+            When.A<Journey>("waits for the post-payment redirect under an Always default", () => NewJourney("redirect-shots"), (journey) =>
+            {
+                journey.DefaultScreenshotPolicy = ScreenshotPolicy.Always;
+                journey.Add(StripeCheckoutPage.PaymentSteps(secrets, "/order/", TimeSpan.FromMilliseconds(200)).Last());
+                JourneyResult failed = journey.Run(stuckOnCheckout);
+                Journey second = NewJourney("redirect-shots-landed");
+                second.DefaultScreenshotPolicy = ScreenshotPolicy.Always;
+                second.Add(StripeCheckoutPage.PaymentSteps(secrets, "/order/", TimeSpan.FromMilliseconds(200)).Last());
+                JourneyResult passed = second.Run(landed);
+                return new RedirectScreenshotOutcome(failed, passed);
+            })
+            .TheTest
+            .ShouldPass<RedirectScreenshotOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("a redirect that never comes fails the step", outcome.StuckOnCheckout.Steps[0].Status == JourneyStepStatus.Failed, outcome.StuckOnCheckout.Steps[0].Message);
+                because.ItsTrue("the failed wait captured no screenshot of the filled form", outcome.StuckOnCheckout.Steps[0].ScreenshotPath == null && stuckOnCheckout.ScreenshotCount == 0, outcome.StuckOnCheckout.Steps[0].ScreenshotPath);
+                because.ItsTrue("a landed redirect passes the step", outcome.Landed.Steps[0].Status == JourneyStepStatus.Passed, outcome.Landed.Steps[0].Message);
+                because.ItsTrue("the passed wait captured the merchant page", outcome.Landed.Steps[0].ScreenshotPath != null && File.Exists(outcome.Landed.Steps[0].ScreenshotPath));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        private sealed record RedirectScreenshotOutcome(JourneyResult StuckOnCheckout, JourneyResult Landed);
 
         private sealed record OrderedOutcome(JourneyResult Result, string[] Log, int SequenceStepCount);
 

@@ -203,7 +203,8 @@ namespace Bam.Automation.Testing
                 WithSecrets(new JourneyStep("Fill card on Stripe Checkout", (page) => new StripeCheckoutPage(page, selectors).FillCardAsync(secrets)) { ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
                 WithSecrets(new JourneyStep("Dismiss Stripe Link if shown", (page) => new StripeCheckoutPage(page, selectors).DismissLinkIfShownAsync()) { ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
                 WithSecrets(new JourneyStep("Submit payment", (page) => new StripeCheckoutPage(page, selectors).SubmitAsync()) { Navigates = true, ScreenshotPolicy = ScreenshotPolicy.Never }, secrets),
-                WithSecrets(new JourneyStep($"Wait for redirect to '{redirectContains}'", (page) => new StripeCheckoutPage(page, selectors).WaitForRedirectAsync(redirectContains, redirectWait)) { Navigates = true }, secrets)
+                // while the redirect has not landed the browser is still on the filled form: capture the merchant page only once it has
+                WithSecrets(new JourneyStep($"Wait for redirect to '{redirectContains}'", (page) => new StripeCheckoutPage(page, selectors).WaitForRedirectAsync(redirectContains, redirectWait)) { Navigates = true, ScreenshotPolicy = ScreenshotPolicy.OnSuccess }, secrets)
             };
             return steps;
         }
@@ -225,7 +226,7 @@ namespace Bam.Automation.Testing
 
             if (handle == null)
             {
-                throw new TimeoutException($"Selector {selector} was reported present but could not be resolved at {Page.GetCurrentUrl()}");
+                throw new InvalidOperationException($"Selector {selector} is present at {Page.GetCurrentUrl()} but no element handle could be resolved; the page object needs a real PuppeteerSharp page to type into Checkout");
             }
 
             // the persistent profile may have prefilled the field: select what is there so the typed value replaces it
