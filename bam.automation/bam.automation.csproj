@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="PuppeteerSharp" Version="20.0.2" />
+    <!-- PuppeteerSharp asks for Microsoft.Extensions >= 8.0.0. The rest of bamtk is on 10.0, and run-tests.sh builds the
+         solution into one folder, where 8.0.0.0 copies would shadow the 10.0.0.0 ones other projects load
+         (bam.automation#7, bamtk#66). Every 10.0.x carries assembly version 10.0.0.0. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>
